@@ -63,7 +63,7 @@ class CalcFramework(DynamicModel):
         # landmask
         if input_files["landmask"] == None: 
             self.landmask = pcr.defined(self.ldd)
-        else
+        else:
             landmask = vos.readPCRmapClone(v = self.input_files["landmask"], \
                                            cloneMapFileName = self.cloneMapFileName, \
                                            tmpDir = self.tmpDir, \
