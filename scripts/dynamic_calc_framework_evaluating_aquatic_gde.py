@@ -90,8 +90,8 @@ class CalcFramework(DynamicModel):
         attributeDictionary['disclaimer' ]   = "Great care was exerted to prepare these data. Notwithstanding, use of the model and/or its outcome is the sole responsibility of the user." 
 
         # make a netcdf output file for monthly estimate irrigation demand
-        attributeDictionary['title'      ]   = "XXX."
-        attributeDictionary['description']   = "XXX. "
+        attributeDictionary['title'      ]   = "Fraction of local groundwater discharge to streamflow."
+        attributeDictionary['description']   = "Fraction of local grounwdater discharge to streamflow."
         self.netcdf_report.createNetCDF(self.output_files["gw_discharge_contribution"],\
                                         "gw_discharge_contribution",\
                                         "-",\
@@ -137,7 +137,6 @@ class CalcFramework(DynamicModel):
             accumulated_runoff = pcr.catchmenttotal( (direct_runoff + interflow + local_gw_discharge), self.ldd)
             
             # percentage contribution of gw_discharge
-            # ~ denominator = accumulated_runoff - (direct_runoff + interflow + local_gw_discharge)
             denominator = accumulated_runoff
             gw_discharge_contribution = local_gw_discharge / denominator
             # - for areas with very small values (e.g. < 0.001 mm/day), we set values to zero
