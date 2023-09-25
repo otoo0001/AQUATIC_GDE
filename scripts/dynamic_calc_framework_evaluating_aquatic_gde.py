@@ -139,7 +139,10 @@ class CalcFramework(DynamicModel):
             # percentage contribution of gw_discharge
             denominator = (accumulated_runoff - direct_runoff + interflow + local_gw_discharge)
             gw_discharge_contribution = local_gw_discharge / denominator
-            gw_discharge_contribution = pcr.max(0.0, pcr.ifthenelse(denominator > 0.0, gw_discharge_contribution, 0.0))
+            # - for areas with very small values (e.g. < 0.001 mm/day), we set values to zero
+            gw_discharge_contribution = pcr.max(0.0, pcr.ifthenelse(denominator > 1e-6, gw_discharge_contribution, 0.0))
+            gw_discharge_contribution = pcr.ifthenelse(local_gw_discharge > 1e-6      , gw_discharge_contribution, 0.0)
+            gw_discharge_contribution = pcr.min(1.0, gw_discharge_contribution)
             
             # set the output to the landmask region only
             gw_discharge_contribution = pcr.ifthen(self.landmask, gw_discharge_contribution)
@@ -195,7 +198,7 @@ def main():
     # - direct runoff and interflow (m.month-1) 
     input_files["direct_runoff"]      = "/scratch/depfg/otoo0001/test_australia_w5e5/netcdf/directRunoff_monthTot_output.nc"
     input_files["interflow"]          = "/scratch/depfg/otoo0001/test_australia_w5e5/netcdf/interflowTotal_monthTot_output.nc"
-    # - TODO: Perhaps, we also should think other components, such as surface water abstraction and evaporation from surface water
+    # - TODO: Perhaps, we also should think other components, such as surface water abstraction and evaporation from surface water, as well as return flow from non irrigation demand
 
 
     # input from MODFLOW run OUTPUT files - at 30 sec resolution
