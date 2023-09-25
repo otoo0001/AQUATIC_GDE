@@ -51,8 +51,7 @@ class CalcFramework(DynamicModel):
         # cell area (m2)
         self.cell_area_total = vos.readPCRmapClone(v = self.input_files["cell_area"], \
                                                    cloneMapFileName = self.cloneMapFileName, \
-                                                   tmpDir = self.tmpDir
-                                                   )
+                                                   tmpDir = self.tmpDir)
         
         # ldd                                            
         ldd = vos.readPCRmapClone(v = self.input_files["ldd_map"], \
