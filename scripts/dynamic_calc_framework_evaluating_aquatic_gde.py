@@ -57,8 +57,7 @@ class CalcFramework(DynamicModel):
         ldd = vos.readPCRmapClone(v = self.input_files["ldd_map"], \
                                   cloneMapFileName = self.cloneMapFileName, \
                                   tmpDir = self.tmpDir
-                                  absolutePath = None, isLddMap = True, cover = None, isNomMap = False
-                                  )
+                                  absolutePath = None, isLddMap = True, cover = None, isNomMap = False)
         self.ldd = pcr.lddrepair(pcr.ldd(ldd))                                   
         
         # object for reporting
@@ -66,7 +65,7 @@ class CalcFramework(DynamicModel):
                                           cloneMapFileName = cloneMapFileName,\
                                           netcdf_format = "NETCDF4",\
                                           netcdf_zlib = False,\
-                                          netcdf_attribute_dict = None,)       
+                                          netcdf_attribute_dict = None)       
 
         
     def initial(self): 
