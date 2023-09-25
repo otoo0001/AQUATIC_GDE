@@ -56,7 +56,7 @@ class CalcFramework(DynamicModel):
         # ldd                                            
         ldd = vos.readPCRmapClone(v = self.input_files["ldd_map"], \
                                   cloneMapFileName = self.cloneMapFileName, \
-                                  tmpDir = self.tmpDir
+                                  tmpDir = self.tmpDir, \
                                   absolutePath = None, isLddMap = True, cover = None, isNomMap = False)
         self.ldd = pcr.lddrepair(pcr.ldd(ldd))                                   
         
