@@ -60,10 +60,20 @@ class CalcFramework(DynamicModel):
                                   absolutePath = None, isLddMap = True, cover = None, isNomMap = False)
         self.ldd = pcr.lddrepair(pcr.ldd(ldd))                                   
         
+        # landmask
+        if input_files["landmask"] == None: 
+            self.landmask = pcr.defined(self.ldd)
+        else
+            landmask = vos.readPCRmapClone(v = self.input_files["landmask"], \
+                                           cloneMapFileName = self.cloneMapFileName, \
+                                           tmpDir = self.tmpDir, \
+                                           absolutePath = None, isLddMap = False, cover = None, isNomMap = False)
+            self.landmask = pcr.defined(landmask)                               
+        
         # object for reporting
         self.netcdf_report = OutputNetcdf(mapattr_dict = None,\
                                           cloneMapFileName = cloneMapFileName,\
-                                          netcdf_format = "NETCDF4",\
+                                          netcdf_format = "NETCDF3_CLASSIC",\
                                           netcdf_zlib = False,\
                                           netcdf_attribute_dict = None)       
 
@@ -120,14 +130,19 @@ class CalcFramework(DynamicModel):
                                                         cloneMapFileName  = self.cloneMapFileName)
             
             
-            # shall we consider negative values of discharge?
-            local_gw_discharge = pcr.max(0.0, local_gw_discharge)
+            # ~ # shall we consider negative values of discharge?
+            # ~ local_gw_discharge = pcr.max(0.0, local_gw_discharge)
             
             # accumulating direct runoff, interflow and groundwater discharge/baseflow - unit: m3/day
             accumulated_runoff = pcr.catchmenttotal( (direct_runoff + interflow + local_gw_discharge), self.ldd)
             
             # percentage contribution of gw_discharge
-            gw_discharge_contribution = local_gw_discharge / (accumulated_runoff - direct_runoff + interflow + local_gw_discharge)
+            denominator = (accumulated_runoff - direct_runoff + interflow + local_gw_discharge)
+            gw_discharge_contribution = local_gw_discharge / denominator
+            gw_discharge_contribution = pcr.max(0.0, pcr.ifthenelse(denominator > 0.0, gw_discharge_contribution, 0.0))
+            
+            # set the output to the landmask region only
+            gw_discharge_contribution = pcr.ifthen(self.landmask, gw_discharge_contribution)
             
 
         # save monthly irrigation demand and monthly irrigation requirement to files (km3/month)
@@ -169,10 +184,11 @@ def main():
     input_files = {}
     
     # input from PCR-GLOBWB and MODFLOW INPUT files (model parameters) - at 30sec resolution
-    # - clone map (-), cell area (m2)
+    # - clone map (-), cell area (m2), landmask
     input_files["clone_map"]                    = "/scratch/depfg/sutan101/data/pcrglobwb_input_arise/develop/global_30sec/cloneMaps/australia_30sec.map"    
     input_files["ldd_map"]                      = "/scratch/depfg/sutan101/data/pcrglobwb_input_arise/develop/global_30sec/routing/surface_water_bodies/version_2020-05-XX/lddsound_30sec_version_202005XX_correct_lat.nc"
     input_files["cell_area"]                    = "/scratch/depfg/sutan101/data/pcrglobwb_input_arise/develop/global_30sec/others/estimate_cell_dimension/30sec/cdo_grid_area_30sec_map_correct_lat.nc"
+    input_files["landmask"]                     = None
 
 
     # input from PCR-GLOBWB run OUTPUT files - at 5 arcmin resolution
