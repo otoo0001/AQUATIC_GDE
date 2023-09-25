@@ -137,7 +137,8 @@ class CalcFramework(DynamicModel):
             accumulated_runoff = pcr.catchmenttotal( (direct_runoff + interflow + local_gw_discharge), self.ldd)
             
             # percentage contribution of gw_discharge
-            denominator = (accumulated_runoff - direct_runoff + interflow + local_gw_discharge)
+            # ~ denominator = accumulated_runoff - (direct_runoff + interflow + local_gw_discharge)
+            denominator = accumulated_runoff
             gw_discharge_contribution = local_gw_discharge / denominator
             # - for areas with very small values (e.g. < 0.001 mm/day), we set values to zero
             gw_discharge_contribution = pcr.max(0.0, pcr.ifthenelse(denominator > 1e-6, gw_discharge_contribution, 0.0))
@@ -207,7 +208,7 @@ def main():
 
     # a dictionary containing output files
     output_files = {}
-    output_files["folder"]                    = "/scratch/depfg/sutan101/test_gw_discharge_contribution/"
+    output_files["folder"]                    = "/scratch/depfg/sutan101/test_gw_discharge_contribution_fixing/"
     output_files["gw_discharge_contribution"] = output_files["folder"] + "/local_gw_discharge_contribution.nc" 
 
 
