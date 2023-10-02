@@ -207,7 +207,7 @@ def main():
 
     # a dictionary containing output files
     output_files = {}
-    output_files["folder"]                    = "/scratch/depfg/sutan101/test_gw_discharge_contribution_fixing/"
+    output_files["folder"]                    = "/scratch/depfg/otoo0001/transient_analysis/test_gw_discharge_contribution_fixing/"
     output_files["gw_discharge_contribution"] = output_files["folder"] + "/local_gw_discharge_contribution.nc" 
 
 
