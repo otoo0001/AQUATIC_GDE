@@ -264,16 +264,6 @@ def main():
     input_files["total_evaporation"] = "/scratch/depfg/otoo0001/test_australia_w5e5/netcdf/totalEvaporation_monthTot_output.nc"
     input_files["land_evaporation"]  = "/scratch/depfg/otoo0001/test_australia_w5e5/netcdf/actualET_monthTot_output.nc"
 
-
-,,
-
-
-
-
-
-    # - TODO: Perhaps, we also should think other components, such as surface water abstraction and evaporation from surface water, as well as return flow from non irrigation demand
-
-
     # input from MODFLOW run OUTPUT files - at 30 sec resolution
     input_files["local_gw_discharge"] = "/scratch/depfg/sutan101/test_pcrglobwb_gmglob_30sec/australia_test_satareafrac_w5e5/australia_30sec/transient/netcdf/baseflow_monthEnd_output.nc" 
 
