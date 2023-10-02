@@ -89,7 +89,8 @@ class CalcFramework(DynamicModel):
         attributeDictionary['comment'    ]   = "See description. Calculated on the folder " + str(self.output_files["folder"]) 
         attributeDictionary['disclaimer' ]   = "Great care was exerted to prepare these data. Notwithstanding, use of the model and/or its outcome is the sole responsibility of the user." 
 
-        # make a netcdf output file for monthly estimate irrigation demand
+        # make netcdf output files for the following:
+        # - fraction of local groundwater discharge to streamflow.
         attributeDictionary['title'      ]   = "Fraction of local groundwater discharge to streamflow."
         attributeDictionary['description']   = "Fraction of local grounwdater discharge to streamflow."
         self.netcdf_report.createNetCDF(self.output_files["gw_discharge_contribution"],\
@@ -97,6 +98,15 @@ class CalcFramework(DynamicModel):
                                         "-",\
                                         "gw_discharge_contribution",\
                                         attributeDictionary)
+        # - fraction of accumulated groundwater discharge to streamflow.
+        attributeDictionary['title'      ]   = "Fraction of accumulated groundwater discharge to streamflow."
+        attributeDictionary['description']   = "Fraction of accumulated grounwdater discharge to streamflow."
+        self.netcdf_report.createNetCDF(self.output_files["gw_discharge_contribution"],\
+                                        "accumulated_gw_discharge_contribution",\
+                                        "-",\
+                                        "accumulated_gw_discharge_contribution",\
+                                        attributeDictionary)
+
 
     def dynamic(self):
         
@@ -128,25 +138,74 @@ class CalcFramework(DynamicModel):
                                                         dateInput         = self.modelTime.fulldate,\
                                                         useDoy            = None,\
                                                         cloneMapFileName  = self.cloneMapFileName)
-            
-            
+            # - surface water abstraction (m3/day)
+            surface_water_abstraction = (1/self.modelTime.day) * self.cell_area_total *\
+                                 vos.netcdf2PCRobjClone(ncFile            = self.input_files["surface_water_abstraction"],\
+                                                        varName           = "automatic",\
+                                                        dateInput         = self.modelTime.fulldate,\
+                                                        useDoy            = None,\
+                                                        cloneMapFileName  = self.cloneMapFileName)
+            # - return flow from non irrigation sector (m3/day)
+            non_irrigation_return_flow = (1/self.modelTime.day) * self.cell_area_total *\
+                                 vos.netcdf2PCRobjClone(ncFile            = self.input_files["non_irrigation_return_flow"],\
+                                                        varName           = "automatic",\
+                                                        dateInput         = self.modelTime.fulldate,\
+                                                        useDoy            = None,\
+                                                        cloneMapFileName  = self.cloneMapFileName)
+            # - total evaporation (m3/day)
+            total_evaporation     = (1/self.modelTime.day) * self.cell_area_total *\
+                                 vos.netcdf2PCRobjClone(ncFile            = self.input_files["total_evaporation"],\
+                                                        varName           = "automatic",\
+                                                        dateInput         = self.modelTime.fulldate,\
+                                                        useDoy            = None,\
+                                                        cloneMapFileName  = self.cloneMapFileName)
+            # - land evaporation (m3/day)
+            land_evaporation     = (1/self.modelTime.day) * self.cell_area_total *\
+                                 vos.netcdf2PCRobjClone(ncFile            = self.input_files["land_evaporation"],\
+                                                        varName           = "automatic",\
+                                                        dateInput         = self.modelTime.fulldate,\
+                                                        useDoy            = None,\
+                                                        cloneMapFileName  = self.cloneMapFileName)
+            # - open water evaporation (m3/day) = total_evaporation - land_evaporation 
+            open_water_evaporation = total_evaporation - land_evaporation                                            
+
+
             # ~ # shall we consider negative values of discharge?
             # ~ local_gw_discharge = pcr.max(0.0, local_gw_discharge)
             
-            # accumulating direct runoff, interflow and groundwater discharge/baseflow - unit: m3/day
-            accumulated_runoff = pcr.catchmenttotal( (direct_runoff + interflow + local_gw_discharge), self.ldd)
+            # accumulating total_runoff (streamflow) - unit: m3/day
+            total_local_runoff = direct_runoff + interflow + local_gw_discharge - surface_water_abstraction + non_irrigation_return_flow - open_water_evaporation
+            accumulated_runoff = pcr.catchmenttotal( total_local_runoff, self.ldd)
+            stream_flow        = accumulated_runoff
             
-            # percentage contribution of gw_discharge
-            denominator = accumulated_runoff
-            gw_discharge_contribution = local_gw_discharge / denominator
+
+            # percentage contribution of LOCAL gw_discharge
+            gw_discharge_contribution = local_gw_discharge / stream_flow
             # - for areas with very small values (e.g. < 0.001 mm/day), we set values to zero
-            gw_discharge_contribution = pcr.max(0.0, pcr.ifthenelse(denominator > 1e-6, gw_discharge_contribution, 0.0))
-            gw_discharge_contribution = pcr.ifthenelse(local_gw_discharge > 1e-6      , gw_discharge_contribution, 0.0)
+            gw_discharge_contribution = pcr.ifthenelse(local_gw_discharge > (1e-6 / self.cell_area_total), gw_discharge_contribution, 0.0)
             gw_discharge_contribution = pcr.min(1.0, gw_discharge_contribution)
             
+            # also set values to zero if stream_flow is small (e.g. < 1 m3/s) 
+            gw_discharge_contribution = pcr.max(0.0, pcr.ifthenelse(stream_flow > (1.0 * 24.0 * 3600.), gw_discharge_contribution, 0.0))
+
             # set the output to the landmask region only
             gw_discharge_contribution = pcr.ifthen(self.landmask, gw_discharge_contribution)
             
+
+            # percentage contribution of accumulated gw_discharge (accumulation along the river network
+            accumulated_gw_discharge  = pcr.catchmenttotal( local_gw_discharge, self.ldd)
+            accumulated_gw_discharge_contribution = accumulated_gw_discharge / stream_flow
+            # - for areas with very small values (e.g. < 1 m3/s), we set values to zero
+            accumulated_gw_discharge_contribution = pcr.ifthenelse(accumulated_gw_discharge > (1.0 * 24.0 * 3600.), accumulated_gw_discharge_contrubution, 0.0)
+            accumulated_gw_discharge_contribution = pcr.min(1.0, accumulated_gw_discharge_contribution)
+
+            # also set values to zero if stream_flow is small (e.g. < 1 m3/s) 
+            accumulated_gw_discharge_contribution = pcr.max(0.0, pcr.ifthenelse(stream_flow > (1.0 * 24.0 * 3600.), accumulated_gw_discharge_contrubution, 0.0))
+            
+            # set the output to the landmask region only
+            accumulated_gw_discharge_contribution = pcr.ifthen(self.landmask, accumulated_gw_discharge_contribution)
+            
+
 
         # save monthly irrigation demand and monthly irrigation requirement to files (km3/month)
         if self.modelTime.isLastDayOfMonth():
@@ -198,6 +257,20 @@ def main():
     # - direct runoff and interflow (m.month-1) 
     input_files["direct_runoff"]      = "/scratch/depfg/otoo0001/test_australia_w5e5/netcdf/directRunoff_monthTot_output.nc"
     input_files["interflow"]          = "/scratch/depfg/otoo0001/test_australia_w5e5/netcdf/interflowTotal_monthTot_output.nc"
+    # - surface water abstraction and non irrigation return flow
+    input_files["surface_water_abstraction"]  = "/scratch/depfg/otoo0001/test_australia_w5e5/netcdf/surfaceWaterAbstraction_monthTot_output.nc"
+    input_files["non_irrigation_return_flow"] = "/scratch/depfg/otoo0001/test_australia_w5e5/netcdf/nonIrrReturnFlow_monthTot_output.nc"
+    # - open water evaporation - calculated from: total_evaporation - land_evaporation (total_evaporation = land_surface_evaporation + open_water_evaporation)
+    input_files["total_evaporation"] = "/scratch/depfg/otoo0001/test_australia_w5e5/netcdf/totalEvaporation_monthTot_output.nc"
+    input_files["land_evaporation"]  = "/scratch/depfg/otoo0001/test_australia_w5e5/netcdf/actualET_monthTot_output.nc"
+
+
+,,
+
+
+
+
+
     # - TODO: Perhaps, we also should think other components, such as surface water abstraction and evaporation from surface water, as well as return flow from non irrigation demand
 
 
@@ -207,8 +280,9 @@ def main():
 
     # a dictionary containing output files
     output_files = {}
-    output_files["folder"]                    = "/scratch/depfg/sutan101/test_gw_discharge_contribution_fixing/"
-    output_files["gw_discharge_contribution"] = output_files["folder"] + "/local_gw_discharge_contribution.nc" 
+    output_files["folder"]                                = "/scratch/depfg/sutan101/test_gw_discharge_contribution_fixing/"
+    output_files["gw_discharge_contribution"]             = output_files["folder"] + "/local_gw_discharge_contribution.nc" 
+    output_files["accumulated_gw_discharge_contribution"] = output_files["folder"] + "/accumulated_gw_discharge_contribution.nc" 
 
 
     # make output folder
