@@ -101,7 +101,7 @@ class CalcFramework(DynamicModel):
         # - fraction of accumulated groundwater discharge to streamflow.
         attributeDictionary['title'      ]   = "Fraction of accumulated groundwater discharge to streamflow."
         attributeDictionary['description']   = "Fraction of accumulated grounwdater discharge to streamflow."
-        self.netcdf_report.createNetCDF(self.output_files["gw_discharge_contribution"],\
+        self.netcdf_report.createNetCDF(self.output_files["accumulated_gw_discharge_contribution"],\
                                         "accumulated_gw_discharge_contribution",\
                                         "-",\
                                         "accumulated_gw_discharge_contribution",\
@@ -218,6 +218,12 @@ class CalcFramework(DynamicModel):
             varFields["gw_discharge_contribution"] = pcr.pcr2numpy(gw_discharge_contribution, vos.MV)
             self.netcdf_report.dataList2NetCDF(self.output_files["gw_discharge_contribution"],\
                                                ["gw_discharge_contribution"],\
+                                               varFields,\
+                                               timeStamp)
+            varFields = {}
+            varFields["accumulated_gw_discharge_contribution"] = pcr.pcr2numpy(accummulated_discharge_contribution, vos.MV)
+            self.netcdf_report.dataList2NetCDF(self.output_files["accumulated_gw_discharge_contribution"],\
+                                               ["accumulated_gw_discharge_contribution"],\
                                                varFields,\
                                                timeStamp)
 
