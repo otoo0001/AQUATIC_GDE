@@ -196,11 +196,11 @@ class CalcFramework(DynamicModel):
             accumulated_gw_discharge  = pcr.catchmenttotal( local_gw_discharge, self.ldd)
             accumulated_gw_discharge_contribution = accumulated_gw_discharge / stream_flow
             # - for areas with very small values (e.g. < 1 m3/s), we set values to zero
-            accumulated_gw_discharge_contribution = pcr.ifthenelse(accumulated_gw_discharge > (1.0 * 24.0 * 3600.), accumulated_gw_discharge_contrubution, 0.0)
+            accumulated_gw_discharge_contribution = pcr.ifthenelse(accumulated_gw_discharge > (1.0 * 24.0 * 3600.), accumulated_gw_discharge_contribution, 0.0)
             accumulated_gw_discharge_contribution = pcr.min(1.0, accumulated_gw_discharge_contribution)
 
             # also set values to zero if stream_flow is small (e.g. < 1 m3/s) 
-            accumulated_gw_discharge_contribution = pcr.max(0.0, pcr.ifthenelse(stream_flow > (1.0 * 24.0 * 3600.), accumulated_gw_discharge_contrubution, 0.0))
+            accumulated_gw_discharge_contribution = pcr.max(0.0, pcr.ifthenelse(stream_flow > (1.0 * 24.0 * 3600.), accumulated_gw_discharge_contribution, 0.0))
             
             # set the output to the landmask region only
             accumulated_gw_discharge_contribution = pcr.ifthen(self.landmask, accumulated_gw_discharge_contribution)
