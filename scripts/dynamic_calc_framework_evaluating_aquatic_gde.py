@@ -221,7 +221,7 @@ class CalcFramework(DynamicModel):
                                                varFields,\
                                                timeStamp)
             varFields = {}
-            varFields["accumulated_gw_discharge_contribution"] = pcr.pcr2numpy(accummulated_discharge_contribution, vos.MV)
+            varFields["accumulated_gw_discharge_contribution"] = pcr.pcr2numpy(accumulated_gw_discharge_contribution, vos.MV)
             self.netcdf_report.dataList2NetCDF(self.output_files["accumulated_gw_discharge_contribution"],\
                                                ["accumulated_gw_discharge_contribution"],\
                                                varFields,\
